@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'net.serenity-bdd.serenity-gradle-plugin' version '4.2.34'
+}
+
+group = 'com.devsu.e2e'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    serenityVersion = '4.2.34'
+    junitVersion = '4.13.2'
+    assertjVersion = '3.26.3'
+}
+
+dependencies {
+    testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-junit:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-cucumber:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-screenplay:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-screenplay-webdriver:${serenityVersion}"
+    testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
+    testImplementation "org.assertj:assertj-core:${assertjVersion}"
+    testImplementation "junit:junit:${junitVersion}"
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events 'PASSED', 'FAILED', 'SKIPPED'
+    }
+    systemProperty 'file.encoding', 'UTF-8'
+    finalizedBy aggregate
+}
+
+serenity {
+    reports = ['single-page-html']
+}
+

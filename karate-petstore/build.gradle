@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.petstore'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+def karateVersion = '1.4.0'
+
+dependencies {
+    testImplementation "com.intuit.karate:karate-junit5:${karateVersion}"
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty "karate.options", System.properties.getProperty("karate.options")
+    systemProperty "karate.env", System.properties.getProperty("karate.env")
+    outputs.upToDateWhen { false }
+}
+
+tasks.withType(Copy) {
+    duplicatesStrategy = 'include'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+
+

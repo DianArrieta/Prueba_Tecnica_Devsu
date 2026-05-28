@@ -1,0 +1,116 @@
+================================================================================
+            CONCLUSIONES DE PRUEBA ENFOCADAS EN LA API PETSTORE
+================================================================================
+
+Fecha de analisis: 28 de Mayo de 2026
+Fuente: reporte Karate (`build/karate-reports/features.user-e2e.karate-json.txt`)
+Resultado del flujo validado: 1 scenario passed, 0 failed
+
+
+HALLAZGOS DE LA API OBSERVADOS EN EJECUCION
+================================================================================
+
+1) POST /user y PUT /user/{username} devuelven una respuesta poco descriptiva
+-------------------------------------------------------------------------------
+En ambos endpoints se observa una estructura como:
+
+  {
+    "code": 200,
+    "type": "unknown",
+    "message": "900001"
+  }
+
+Y en otras ejecuciones puede verse un valor grande en `message` (por ejemplo
+"9223372036854775807").
+
+Conclusion:
+- La API confirma exito tecnico (code=200), pero la semantica del campo
+  `message` no es clara para negocio.
+- `type: "unknown"` tampoco aporta contexto.
+- Esta respuesta no confirma por si sola que los datos quedaron como se esperaba.
+
+
+2) GET /user/{username} si entrega evidencia funcional completa
+---------------------------------------------------------------
+Despues de crear y despues de editar, el GET devuelve el objeto usuario completo
+con los datos persistidos (id, username, firstName, lastName, email, etc.).
+
+Conclusion:
+- El GET es el endpoint confiable para validar resultado funcional real.
+- Para pruebas E2E, validar solo POST/PUT no es suficiente; siempre debe
+  hacerse GET de verificacion posterior.
+
+
+3) La API permite cambiar el username con PUT y luego consultarlo con el nuevo
+-------------------------------------------------------------------------
+En la ejecucion, el PUT se realiza contra la ruta del username original y en el
+body se envia un `username` nuevo. Luego el GET al username nuevo responde 200
+con los cambios aplicados.
+
+Conclusion:
+- El username se comporta como campo mutable en esta API.
+- Este comportamiento debe documentarse porque en otros disenos API el username
+  suele ser inmutable.
+
+
+4) DELETE responde 200, pero con semantica distinta a POST/PUT
+---------------------------------------------------------------
+DELETE devuelve algo como:
+
+  {
+    "code": 200,
+    "type": "unknown",
+    "message": "User_1fbec929-611c-4a29-a540-b3a8cf7d96ae"
+  }
+
+Aqui `message` contiene el username, mientras que en POST/PUT contiene un valor
+numerico asociado al id.
+
+Conclusion:
+- Existe inconsistencia semantica del campo `message` entre endpoints.
+- Las aserciones deben enfocarse en `status` + verificacion funcional posterior,
+  no en interpretar `message` como contrato estable.
+
+
+5) Exposicion de datos sensibles en GET
+---------------------------------------
+La respuesta GET incluye el campo `password` en texto plano.
+
+Conclusion:
+- Desde perspectiva de seguridad, no es una practica recomendada exponer
+  contrasena en respuestas de lectura.
+- Es un hallazgo importante de API, aunque la prueba funcional pase.
+
+
+RIESGOS Y GAPS DE VALIDACION DETECTADOS EN LAS PRUEBAS
+================================================================================
+
+1) Falta validacion post-delete
+-------------------------------
+Se valida que DELETE responda 200, pero no se ejecuta un GET final esperando
+404 para confirmar eliminacion efectiva.
+
+2) Falta validar contrato de respuesta de POST/PUT/DELETE
+----------------------------------------------------------
+Hoy se valida exito (status/code), pero no se valida consistencia semantica de
+campos como `type` y `message`, que son ambiguos e inconsistentes.
+
+3) Falta cobertura de casos negativos
+-------------------------------------
+No hay escenarios de usuario inexistente, payload invalido ni colisiones de
+datos para observar manejo de errores de la API.
+
+
+CONCLUSION GENERAL SOBRE LA API
+================================================================================
+
+La API cumple funcionalmente el flujo CRUD de usuario (crear, consultar,
+editar, volver a consultar y eliminar), pero sus respuestas de confirmacion en
+POST/PUT/DELETE son poco expresivas y semanticamente inconsistentes.
+
+Para obtener confianza real en pruebas, la estrategia correcta es:
+- usar POST/PUT/DELETE como confirmacion tecnica (status 200), y
+- usar GET como validacion funcional de estado de datos.
+
+Adicionalmente, la exposicion de `password` en GET y la ausencia de verificacion
+404 post-delete deben considerarse hallazgos relevantes para madurez de API.

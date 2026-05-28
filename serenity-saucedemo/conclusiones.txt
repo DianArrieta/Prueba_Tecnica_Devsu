@@ -1,0 +1,143 @@
+=====================================================================
+ CONCLUSIONES Y HALLAZGOS - PRUEBA E2E SAUCEDEMO
+ Fecha: Mayo 2026
+ Aplicacion bajo prueba: https://www.saucedemo.com
+=====================================================================
+
+OBJETIVO
+--------
+Validar de forma automatizada el flujo de compra en SauceDemo con
+Serenity BDD + Screenplay + Cucumber, usando datos de configuracion
+externa y reporte HTML consolidado.
+
+
+ALCANCE IMPLEMENTADO (ESTADO ACTUAL)
+------------------------------------
+Escenario activo:
+- Archivo: src/test/resources/features/purchase.feature
+- Tipo: Scenario Outline
+- Parametros: cantidad, mensaje
+
+Flujo cubierto por el escenario:
+1) Abrir pagina de SauceDemo
+2) Iniciar sesion con credenciales validas
+3) Comprar N productos (paso parametrizado)
+   - agrega productos
+   - abre carrito
+   - completa checkout
+   - finaliza compra
+4) Verificar mensaje final de confirmacion
+
+
+HALLAZGOS FUNCIONALES
+---------------------
+1. AUTENTICACION
+   - El login se ejecuta con credenciales leidas desde configuracion.
+   - El acceso con standard_user funciona correctamente.
+
+2. COMPRA PARAMETRIZADA
+   - El paso "compra <cantidad> productos" permite variar la cantidad.
+   - La tarea AddProductsToCart agrega productos por posicion en inventario.
+   - Si la cantidad solicitada supera los productos disponibles, se genera
+     error descriptivo para evitar falsos positivos.
+
+3. CHECKOUT Y CIERRE
+   - El flujo navega por carrito, formulario de checkout, overview y finish.
+   - Se valida el texto final "Thank you for your order!".
+
+4. REPORTE Y TRAZABILIDAD
+   - Serenity genera evidencias por paso (capturas y detalle de ejecucion).
+   - El reporte HTML consolidado se publica en target/site/serenity/index.html.
+
+
+CONCLUSIONES TECNICAS
+---------------------
+1. PATRON SCREENPLAY
+   - La separacion Tasks/Interactions/Questions mantiene bajo acoplamiento.
+   - Step definitions quedan enfocadas en orquestacion, no en detalles UI.
+
+2. CONFIGURACION EXTERNA
+   - EnvironmentConfig usa ConfigFactory.parseResources("serenity.conf").
+   - URL y credenciales salen de src/test/resources/serenity.conf.
+
+3. EJECUCION Y REPORTERIA
+   - build.gradle ejecuta aggregate al finalizar test (finalizedBy aggregate).
+   - Esto asegura generacion automatica del reporte Serenity tras la suite.
+
+4. ESTABILIDAD PRACTICA
+   - Con wait.for.timeout y element.timeout en 60000 ms, el flujo actual
+     se ejecuta de forma estable en modo headless.
+
+
+CONFIGURACION VIGENTE
+---------------------
+Fuente:
+- src/test/resources/serenity.conf
+
+Valores actuales:
+- Browser: Chrome
+- driver: chrome
+- headless: true
+- wait.for.timeout: 60000
+- element.timeout: 60000
+- base.url: https://www.saucedemo.com
+- username: standard_user
+- password: secret_sauce
+
+
+RESULTADO DE EJECUCION VERIFICADO
+---------------------------------
+Comando ejecutado:
+- .\gradlew clean test
+
+Resultado observado:
+- BUILD SUCCESSFUL
+- Escenario ejecutado: 1
+- Escenarios exitosos: 1
+- Escenarios fallidos: 0
+
+Evidencia en Serenity:
+- target/site/serenity/summary.txt
+  Number of scenarios: 1
+  Passed: 1
+  Failed: 0
+
+
+RIESGOS / LIMITACIONES ACTUALES
+-------------------------------
+1. Cobertura funcional acotada
+   - Actualmente existe 1 Scenario Outline principal.
+
+2. Dependencia de sitio externo
+   - La estabilidad de la prueba depende de disponibilidad de saucedemo.com
+     y de la conectividad de red.
+
+3. Datos de checkout fijos en step actual
+   - firstName/lastName/postalCode se envian con valores definidos en codigo.
+
+
+RECOMENDACIONES DE MEJORA
+-------------------------
+1. Agregar escenarios negativos
+   - login invalido, usuario bloqueado, checkout con datos faltantes.
+
+2. Parametrizar mas datos
+   - incluir nombres y codigo postal desde el feature.
+
+3. Aumentar aserciones funcionales intermedias
+   - validacion de carrito, precios y totales en overview.
+
+4. Alinear documentacion secundaria
+   - mantener README.md y readme.txt sincronizados con el estado real.
+
+5. Integrar ejecucion en CI/CD
+   - publicar target/site/serenity como artefacto del pipeline.
+
+
+CONCLUSION FINAL
+----------------
+La automatizacion actual cumple el objetivo del flujo E2E de compra con
+arquitectura mantenible basada en Screenplay, configuracion externa y
+reporte Serenity consolidado. El estado verificado es estable para el
+escenario implementado y deja una base solida para ampliar cobertura.
+=====================================================================
